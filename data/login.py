@@ -4,7 +4,7 @@ from flask.ext.login import LoginManager, login_user, current_user,\
      logout_user, login_required, UserMixin
 #from config import basedir
 from flask.ext.wtf import Form
-from wtforms import Form, BooleanField, TextField, PasswordField, validators
+from wtforms import BooleanField, TextField, PasswordField, validators
 from wtforms.validators import Required
 from flask import g, session, url_for, request, flash, redirect
 #from models import User, ROLE_USER

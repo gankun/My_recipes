@@ -13,6 +13,7 @@ import MySQLdb
 #import login.py
 mysql = MySQL()
 
+#set up login manager
 login_manager = LoginManager() 
 
 app = Flask(__name__)
@@ -25,13 +26,15 @@ app.config['MYSQL_DATABASE_HOST'] = 'localhost'
 app.config.from_envvar('FLASKR_SETTINGS', silent=True)
 mysql.init_app(app)
 
+# Form for loging in
 class LoginForm(Form):
     
     email = TextField('Email Address', [validators.Length(min=6, max=35)])
     password = PasswordField('Password', [
         validators.Required(),
     ])
-
+    
+# Form for Registering
 class RegistrationForm(Form):
     username = TextField('Username', [validators.Length(min=4, max=25)])
     email = TextField('Email Address', [validators.Length(min=6, max=35)])
@@ -44,44 +47,20 @@ class RegistrationForm(Form):
 
 # user class
 class User(UserMixin):
-    
-    
-    def __init__(self, _email):
-        self.email = _email
-       
+    def __init__(self, name, id, active=True):
+        self.name = name
+        self.id = id
+        self.active = active
+ 
     def is_active(self):
-            """True, as all users are active."""
-            return True
+        return self.active
 
-    def get(userid):
-        ''' Comment'''
-        db = get_db()
-        cur = db.cursor()
-        #Execute Query
-        cur.execute("SELECT * FROM user")
-        for user_id in cur:
-            if user_id[0] == userid:
-                user = User(user_id[0], user_id[1])
-                
-                return user
-        return None
-    def find_id(email):
-        ''' Comment'''
-        return User()
-        db = get_db(email)
-        cur = db.cursor()
-            #Execute Query
-        cur.execute("SELECT * FROM user")
-        for user_id in cur:
-            if user_id[1] == email:
-                user = User(user_id[0], user_id[1])
-                        
-                return user    
-            
-    def get_id(self):
-        """Return the email address to satisfy Flask-Login's requirements."""
-        return self.email   
-
+USERS = {
+    1: User(u"Matt", 1),
+    2: User(u"Steve", 2),
+    3: User(u"Creeper", 3, False),
+    }
+USER_NAMES = dict((u.name, u) for u in USERS.itervalues())
 #--------------------------
 # DATABASE CONNECT FUNCTIONS
 
@@ -108,12 +87,19 @@ def close_db(error):
 # -----------------------------------------
 # LOGIN FUNCTIONS
 
-# callback is used to reload user object from ID stored in session.
 
+@app.before_request
+def before_request():
+    """Will be executed before each request."""
+    g.user = current_user
+    
+# callback is used to reload user object from ID stored in session.
 @login_manager.user_loader
-def user_loader(userid):
+def user_loader(id):
     ''' Uses the get function to find a user for a given user_id '''
-    return User(userid) 
+    print "UserLaodere"
+    return User('Matt', 1)
+    return USERS.get(int(id)) 
 #User.get(userid)
 
 '''
@@ -121,24 +107,24 @@ Function to login the user. Users will be sent back to this page if not
 logged in. Request using the form the email and password. 
 '''
 @app.route('/login', methods=['GET', 'POST'])
+@app.route("/login", methods=["GET", "POST"])
 def login():
     form = LoginForm(request.form)
-    if request.method == 'POST' and form.validate():
-        user = User(form.email.data)
-        if user:
-            """Check for a valid user."""
-            login_user(user)
-            return redirect(url_for("index"))
-            db = get_db()
-            cur = db.cursor()
-            #Execute Query
-            cur.execute("SELECT * FROM user WHERE user_id = 1")
-            user_data = cur.fetchone()
-            user = User(user_data[0], user_data[1])
-            login_user(user)
-            return redirect(url_for("register"))
-    
-    return render_template('login.html', form = form)
+    if request.method == "POST" and "username" in request.form:
+        username = request.form["username"]
+        '''Check if the input is in our list of valid users.'''
+        if username in USER_NAMES:
+            #remember = request.form.get("remember", "no") == "yes"
+            '''login the user.'''
+            user = User(username, USER_NAMES[username])
+            login_user(user, remember=False)
+            flash("Logged in!")
+            return redirect(request.args.get("next") or url_for("cook"))
+            #else:       
+             #   flash("Sorry, but you could not log in.")
+        else:
+            flash(u"Invalid username.")
+    return render_template("login.html",form=form)
 
 @app.route("/logout", methods=["GET"])
 #@login_required
@@ -169,7 +155,7 @@ def authenticate(email, password):
     # Verify if a email belongs to a user, retrieve id.    
         #Execute Query
     cur.execute("SELECT user_id FROM user \
-                WHERE user_info.email = test@test1.com")  
+                WHERE user_info.i = test@test1.com")  
     user_id = cursor.fetchone()
     # Check if any valid users.
     if user_id == 'none':
@@ -200,6 +186,11 @@ def test():
     else:
         return 'no'
 
+@app.route('/')
+
+def home():
+    return render_template("home.html")
+
 
 @app.route('/index')
 @login_required
@@ -218,14 +209,37 @@ def index():
         for food in cur:
             dish = food[1]
         
-        return render_template("index.html", title = 'home', user = user, dish = dish)
+        return render_template("index.html", title = 'home', user = 'Matt', dish = dish)
+
+
+@app.route('/cook')
+#@login_required
+def cook():
+    # connect to the database, if not connected
+    db = get_db()
+    cur = db.cursor()
+    #Execute Query
+    cur.execute("SELECT * FROM user")
+    #entries = cur.fetchall()
+    # go through username and recipes and print message.
+    for user_name in cur:
+        user = user_name[2]
+ 
+        cur.execute("SELECT * FROM recipe")
+        for food in cur:
+            dish = food[1]
+            prep = food[2]
+            serve = food[3]
+            proc = food[4]
+            return render_template("recipe.html", title = 'home', user = user, dish = dish,\
+                               prep = prep, serve = serve, proc = proc)
 
 
 
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
 if __name__ == '__main__':
-    login_manager = LoginManager()    
+    
     login_manager.init_app(app)
     login_manager.login_view = '/login'
 

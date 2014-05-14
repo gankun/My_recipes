@@ -26,10 +26,8 @@ def hello_world():
     cursor.execute(query)
     entry = cursor.fetchall()
     i = 'zero'
-    for (user_name) in cursor:
-        i += "user_name"
-        #return "tada"
-     #   print user_name
+    for user_name in cursor:
+        a = user_name
         return render_template("index.html", title = 'home', user = user_name[2])
     
     cursor.close()
