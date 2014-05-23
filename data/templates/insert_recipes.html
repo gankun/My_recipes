@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+{% block body %}
+  <h2>Insert Recipe</h2>
+  {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+  <form action="{{ url_for('insert_recipe') }}" method=post id="Insertform">
+    <dl>
+      <dt>Recipe Name:
+      <dd><input type=text name=name>
+      <dt>Servings:
+      <dd><input type=text name=servings>
+      <dt>Prep Time:
+      <dd><input type=text name=time>
+      <p>
+      <dt>Procedure:
+    </dl>
+  </form>
+
+<textarea rows="10" cols="50" name="proc" form="Insertform">
+Enter RECIPIES.... </textarea>
+<p>
+<dd><input type=submit value=Insert Recipe form="Insertform">
+<p>
+<h3> Procedure</h3>
+<dt> To write a recipe procedure, specify all ingredients with
+<br> ** at the start of the ingredient. Specify any quantities
+<br> of the ingredient, followed by a * before the ingredient name. </dt>
+
+<p>
+<dt> When writing a link to another stored recipe, write it as @ followed
+<br> by the recipe id number. For example @212 for recipe with id 212</dt>
+<h3> Example</h3>
+<dt> ** 1 * Egg
+<dt> ** pinch * Salt
+<dt> ** 3 cups * Flour
+
+<dt> Mix all of the ingredients in a bowl.
+
+{% endblock %}

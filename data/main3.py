@@ -108,9 +108,9 @@ def before_request():
 @login_manager.user_loader
 def user_loader(id):
     ''' Uses the get function to find a user for a given user_id '''
-    print "UserLaodere"
+    print "UserLoader"
     return User('Matt', 1)
-    return USERS.get(int(id)) 
+    
 #User.get(userid)
 
 '''
@@ -123,11 +123,12 @@ def login():
     form = LoginForm(request.form)
     if request.method == "POST" and "username" in request.form:
         username = request.form["username"]
+        password = request.form["password"]
         '''Check if the input is in our list of valid users.'''
-        if username in USER_NAMES:
+        if authenticate(username, password):
             #remember = request.form.get("remember", "no") == "yes"
             '''login the user.'''
-            user = User(username, USER_NAMES[username])
+            user = User('Matt',1)
             login_user(user, remember=False)
             flash("Logged in!")
             return redirect(request.args.get("next") or url_for("index"))
@@ -158,22 +159,31 @@ def logout_page():
 it checks their username with the inputed password.
 If the password + salt doesn't match, then the function
 returns false. If the salted password matches the hash, return
-true'''    
+the user id.'''    
 def authenticate(email, password):
-
+    # set up database connection.
     db = get_db()
     cur = db.cursor()
-    # Verify if a email belongs to a user, retrieve id.    
-        #Execute Query
-    cur.execute("SELECT user_id FROM user \
-                WHERE user_info.i = test@test1.com")  
-    user_id = cursor.fetchone()
-    # Check if any valid users.
-    if user_id == 'none':
-        return false
-    return user_id
+    # Verify that a user exists with the given email. Save the user_id for
+    # verification.
+    cur.execute("SELECT COUNT(1), user_id FROM user WHERE user.email = %s",\
+                [str(email)])
+    result = cur.fetchone() 
     
-
+    if result[0]:
+    # if email is verified, similarly verify the email witht the given password    
+        cur.execute("SELECT authenticate(%s, %s)", [str(result[1]),\
+                                                    str(password)])
+        valid = cur.fetchone()
+        if valid[0]:
+            # valid email and password
+            return result[1]
+        else:
+            # valid email, wrong password
+            return False
+    else:
+        # invalid email
+        return False
 
 '''
 Function to register a user. User is sent here fom login screen and can enter 

@@ -1,9 +1,24 @@
-<html>
+{% extends "layout.html" %}
+{% block body %}
   <head>
-    <title>{{title}} - microblog</title>
+    <title>{{title}} - Cook</title>
   </head>
   <body>
       <h1>Hello, {{user}}!</h1>
-      <h2>Would yous like to cook {{dish}}?</h2>
-  </body>
-</html>
+      <h2>What would you like to cook today?</h2>
+      <table>
+      {% for dish in table %}
+          <tr>
+             <td>
+             <a href="{{url_for('cook', id=dish[0])}}">
+             {{dish[1]}}
+             </a>
+             </td>
+		
+          </tr>
+      {% endfor %}
+      </table>
+    
+
+
+{% endblock %}
