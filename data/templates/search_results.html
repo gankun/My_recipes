@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block body %}
+  <head>
+    <title>{{title}} - Search Results</title>
+  </head>
+  <body>
+      
+      <h2>{{Type}} Results for: {{Query}} in: </h2>
+      <table>
+      {% for dish in table %}
+          <tr>
+             <td>
+             <a href="{{url_for('cook', id=dish[0])}}">
+             {{dish[1]}}
+             </a>
+             </td>
+		
+          </tr>
+      {% endfor %}
+      </table>
+    
+
+
+{% endblock %}

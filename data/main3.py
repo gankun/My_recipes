@@ -9,6 +9,7 @@ from wtforms import Form, BooleanField, TextField, TextAreaField, \
 from flask.ext.login import LoginManager, login_user, current_user,\
      logout_user, login_required, UserMixin
 
+
 import MySQLdb
 
 #import login.py
@@ -55,6 +56,10 @@ class RegistrationForm(Form):
     ])
     confirm = PasswordField('Repeat Password')
     accept_tos = BooleanField('I accept the TOS', [validators.Required()])
+
+# Form for search forms
+class SearchForm(Form):
+    search = TextField('search', [validators.Required(), validators.Length(min=3)])
 
 # user class
 class User(UserMixin):
@@ -103,12 +108,15 @@ def close_db(error):
 def before_request():
     """Will be executed before each request."""
     g.user = current_user
+    g.search_form = SearchForm()
+    if g.user.is_authenticated():
+        g.search_form = SearchForm()
     
 # callback is used to reload user object from ID stored in session.
 @login_manager.user_loader
 def user_loader(id):
     ''' Uses the get function to find a user for a given user_id '''
-    print "UserLoader"
+    
     return User('Matt', 1)
     
 #User.get(userid)
@@ -280,11 +288,54 @@ def cook(id):
             dish = food[1]
             prep = food[2]
             serve = food[3]
-            proc = food[4]
+            proc = procedure_view(food[4])
             return render_template("recipe.html", title = 'home', user = user, dish = dish,\
                                prep = prep, serve = serve, proc = proc)
+        
+@app.route('/search', methods=['GET', 'POST'])
+def search():
+    #if not g.search_form.validate_on_submit():
+    form = SearchForm(request.form)
+    if request.method == 'POST' and "search" in request.form:
+        
+        query = request.form['search']
+        if query == '' or query == None:
+            flash(u"Invalid Search.")
+            redirect(url_for('search'))
+        else:
+            Type =request.form['type']
+            return redirect(url_for('search_results', query = query, Type = Type))
+    return render_template('adv_search.html')       
 
-
+@app.route('/search_results/<query>', defaults={'Type': None})        
+@app.route('/search_results/<query>/<Type>')
+def search_results(query, Type):
+    
+    db = get_db()
+    cur = db.cursor()
+    
+    if (Type == None or Type == 'Recipe Name'):
+        cur.execute("SELECT * from recipe WHERE recipe_name LIKE CONCAT('%%', %s ,'%%')",\
+                    [query])
+    elif(Type == 'Recipe Procedure'):
+        cur.execute("SELECT * from recipe WHERE prep_procedure LIKE CONCAT('%%', %s ,'%%')", [query])
+    else:
+        cur.execute("SELECT * from recipe WHERE recipe_source LIKE CONCAT('%%', %s ,'%%')", [query])        
+    table = []
+    for food in cur:
+        table.append([int(food[0]),food[1]])    
+    return render_template('search_results.html', title = "Search Results", \
+        Query = query,
+        table = table, Type = Type) 
+    
+        
+        
+'''Function to modify a procedure such that it is adapted for viewing in 
+   windows. String is stripped of * @ chars and links and html are added.'''
+def procedure_view(proc):
+    proc = proc.replace('**', '<br>')
+    proc = proc.replace('@', '')
+    return proc
 
 app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
 
@@ -294,3 +345,5 @@ if __name__ == '__main__':
     login_manager.login_view = '/login'
 
     app.run(debug=True)
+    
+    # ul li to format the ingredients.

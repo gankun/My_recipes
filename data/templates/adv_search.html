@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+{% block body %}
+  <h2>Advanced Search</h2>
+  {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+  <form action="{{ url_for('search') }}" method=post>
+    <dl>
+      <dt>Search:
+      <dd><input type=text name=search>
+      <dt>Type of Seach:
+      <SELECT NAME="type">
+        <OPTION SELECTED> Recipe Name
+        <OPTION> Recipe Ingredients</OPTION>
+        <OPTION> Recipe Author</OPTION>
+        <OPTION> Recipe Procedure</OPTION>
+      </SELECT>
+      <dd><input type=submit value=Search>
+    </dl>
+  </form>
+
+{% endblock %}
