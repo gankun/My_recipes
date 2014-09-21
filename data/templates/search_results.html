@@ -5,8 +5,12 @@
   </head>
   <body>
       
-      <h2>{{Type}} Results for: {{Query}} in: </h2>
+      <h2>{{Type}} results for {{Query}}: </h2>
       <table>
+      {% if table == [] %}
+      <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      No Results Found</td>
+      {% endif %}
       {% for dish in table %}
           <tr>
              <td>
